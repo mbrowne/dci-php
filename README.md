@@ -1,4 +1,5 @@
 Documentation is forthcoming; in the meantime, for an introduction to DCI, see these introductory articles:
+
 http://fulloo.info/Documents/CommSenseCurrentDraft.pdf
 http://www.artima.com/articles/dci_vision.html
 
