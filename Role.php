@@ -20,8 +20,6 @@ abstract class Role
 	 * @var Context
 	 */
 	protected $context;
-	
-	private $publicDataPropertyNames = array();
 
 	function __construct(RolePlayerInterface $data, Context $context) {
 		$this->data = $data;
@@ -33,54 +31,19 @@ abstract class Role
 	 * Get a data property
 	 */
 	function __get($propName) {
-		//If it's a public property, just return it
-		if ($this->isPublicDataProperty($propName)) {
-			return $this->data->$propName;
-		}
-		else {
-			//This allows private/protected data properties to be accessed from role methods
-			$prop = $this->data->getPrivateOrProtectedReflProp($propName);
-			if ($prop) {
-				$prop->setAccessible(true);
-				return $prop->getValue($this->data);
-			}
-			else {
-				//CodeIgniter-specific
-				$CI = get_instance();
-				$val = @$CI->$propName;
-				
-				if ($val == null) {
-					return $this->data->$propName;
-					//trigger_error("Undefined property: '$propName' does not exist on class '".get_class($this->data)."'", E_USER_NOTICE);
-				}
-				return $val;
-			}
-		}
+		return $this->data->$propName;
 	}
 	
 	/**
 	 * Set a data property
 	 */
 	function __set($propName, $val) {
-		if ($this->isPublicDataProperty($propName)) {
-			$this->data->$propName = $val;
-		}
-		else {
-			//This allows private/protected data properties to be accessed from role methods
-			$prop = $this->data->getPrivateOrProtectedReflProp($propName);
-			if ($prop) {
-				$prop->setAccessible(true);
-				$prop->setValue($this->data, $val);
-			}
-			else $this->data->$propName = $val;
-			//trigger_error("Undefined property: '$propName' does not exist on class '".get_class($this->data)."'", E_USER_NOTICE);
-		}
+		$this->data->$propName = $val;
 	}
 	
 	/**
 	 * Returns whether or not the property is set on the data object.
 	 * Note that for private/protected properties, this will always return false.
-	 * A future version of this library may change that. 
 	 */
 	function __isset($propName) {
 		return isset($this->data->$propName);
@@ -119,26 +82,5 @@ abstract class Role
 	 */
 	function getDataObject() {
 		return $this->data;
-	}
-	
-	/**
-	 * Returns whether the given property name is a public property of $this->data 
-	 * @param string
-	 * @return bool
-	 */
-	private function isPublicDataProperty($propName) {
-		//check if the property exists in the cached list of public properties
-		if (array_key_exists($propName, $this->publicDataPropertyNames)) {
-			return true;
-		}
-		//if it wasn't found in the cache, or if this method is being called for the first time,
-		//call get_object_vars() again in case the property isn't defined on the object's class but
-		//was dynamically added to it sometime after calling addRole(). Recall that PHP allows new
-		//properties (not defined in the class) to be added to an object at any time.
-		$this->publicDataPropertyNames = get_object_vars($this->data);
-		if (array_key_exists($propName, $this->publicDataPropertyNames)) {
-			return true;
-		}
-		return false;
 	}
 }
