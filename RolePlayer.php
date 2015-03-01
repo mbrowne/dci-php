@@ -161,32 +161,4 @@ abstract class RolePlayer implements RolePlayerInterface
 		//Call $role->$methodName() with the given arguments
 		return call_user_func_array(array($role, $methodName), $args);
 	}
-
-	/**
-	 * Get the private and protected reflection methods for this class
-	 * (the data object, not the roles) indexed by method name
-	 * @return array
-	 */
-	private function getPrivateAndProtectedReflMethods() {
-		static $reflMethods;
-		if (!$reflMethods) {
-			$reflMethods = array();
-			$reflClass = new \ReflectionClass($this);
-			$tmp = $reflClass->getMethods(\ReflectionProperty::IS_PRIVATE | \ReflectionProperty::IS_PROTECTED);
-			foreach ($tmp as $method) {
-				$reflMethods[$method->name] = $method;
-			}
-		}
-		return $reflMethods;
-	}
-	
-	/**
-	 * Used by Role::__call()
-	 */
-	function getPrivateOrProtectedReflMethod($methodName) {
-		$reflMethods = $this->getPrivateAndProtectedReflMethods();
-		if (array_key_exists($methodName, $reflMethods)) return $reflMethods[$methodName];
-		else return false;
-	}
-	
 }

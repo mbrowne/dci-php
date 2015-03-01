@@ -57,16 +57,13 @@ abstract class Role
 	 * this __call function.
 	 */
 	function __call($methodName, $args) {
-		//If the method is public
+		//Make sure the method exists
+		//(We check get_class_methods() rather than method_exists() because the method might be
+		//private or protected, in which case we let PHP throw an error)
 		if (in_array($methodName, get_class_methods($this->data))) {
+			//Note that roles should only have access to public data object methods.
+			//If the method is private or protected, PHP will throw an error here.
 			return call_user_func_array(array($this->data, $methodName), $args);		
-		}
-		//If the method is private or protected...
-		elseif (method_exists($this->data, $methodName)) {
-			//...then call the method using reflection
-			$method = $this->data->getPrivateOrProtectedReflMethod($methodName);
-			$method->setAccessible(true);
-			return $method->invokeArgs($this->data, $args);
 		}
 		else {
 			throw new \BadMethodCallException(

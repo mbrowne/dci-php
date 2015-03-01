@@ -3,6 +3,7 @@ ini_set('display_errors', 1);
 
 set_include_path(__DIR__.'/../../');
 require('Role.php');
+require('RolePlayerInterface.php');
 require('RolePlayer.php');
 require('Context.php');
 
