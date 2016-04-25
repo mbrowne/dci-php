@@ -10,6 +10,10 @@ class ContextProxy
 		$this->parentContext = $parentCtx;
 	}
 	
+	function removeAllRoles() {
+		$this->context->removeAllRoles();
+	}
+	
 	function __call($methodName, $args) {
 		$rolePlayers = array_merge($this->context->_getRolePlayers(), $this->parentContext->_getRolePlayers());
 		foreach ($rolePlayers as $rolePlayer) {
@@ -24,5 +28,9 @@ class ContextProxy
 		}
 		
 		return $ret;
+	}
+	
+	function __get($key) {
+		return $this->context->$key;
 	}
 }

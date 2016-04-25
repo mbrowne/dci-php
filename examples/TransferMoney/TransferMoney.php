@@ -26,13 +26,17 @@ namespace UseCases
 
 /**
  * Roles are defined in a sub-namespace of the context as a workaround for the fact that
- * PHP doesn't support inner classes 
+ * PHP doesn't support inner classes.
+ *
+ * We use the trait keyword to define roles because the trait keyword is native to PHP (PHP 5.4+).
+ * In an ideal world it would be better to have a "role" keyword -- think of "trait" as just
+ * our implementation technique for roles in PHP.
+ * (This particular implmentation for PHP actually uses a separate class for the role behind the scenes,
+ * but that programmer needn't be aware of that.)
  */
 namespace UseCases\TransferMoney\Roles
 {
-	use DCI\Role;
-	
-	class SourceAccount extends Role
+	trait SourceAccount
 	{
 		/**
 		 * Withdraw the given amount from this account
@@ -56,26 +60,11 @@ namespace UseCases\TransferMoney\Roles
 		}
 	}
 	
-	class DestinationAccount extends Role
+	trait DestinationAccount
 	{
 		function deposit($amount) {
 			$this->increaseBalance($amount);
 			//update transaction log...
 		}
-		
-		/*
-		These methods are here for illustrative purposes only.
-		They're commented out because they're not used in the context as currently written, so there's
-		no reason for them to exist in this example (since roles are context-specific)
-		
-		function transferIn($amount) {
-			$this->withdraw($amount);
-			$this->context->sourceAccount->deposit($amount);
-		}
-		
-		function withdraw($amount) {
-			$this->decreaseBalance($amount);
-		}
-		*/
 	}
 }

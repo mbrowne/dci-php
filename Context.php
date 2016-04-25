@@ -4,8 +4,11 @@ namespace DCI;
 /**
  * DCI Context base class
  */
-abstract class Context extends RolePlayer //Contexts can be RolePlayers too (i.e. nested contexts)
+abstract class Context
 {
+	//Contexts can be RolePlayers too (i.e. nested contexts)
+	use RolePlayer;
+
 	//static private $instantiatedContexts = array();
 	
 	/**
@@ -14,9 +17,10 @@ abstract class Context extends RolePlayer //Contexts can be RolePlayers too (i.e
 	 * @var array
 	 */
 	private $rolePlayers = array();
+	private $subContexts = array();
 	
 	/**
-	 * Rebind the context with different domain objects.
+	 * Rebind the context with different data objects.
 	 * This is equivalent to directly calling __construct() again on the context instance.
 	 */
 	function rebind() {
@@ -31,7 +35,9 @@ abstract class Context extends RolePlayer //Contexts can be RolePlayers too (i.e
 	 * Don't forget to use the proxy object returned by this method, not the $subContext object you passed in!
 	 */
 	function initSubContext(Context $subContext) {
-		return new ContextProxy($subContext, $this);
+		$subContext = new ContextProxy($subContext, $this);
+		$this->subContexts[] = $subContext;
+		return $subContext;
 	}
 	
 	/**
@@ -85,6 +91,10 @@ abstract class Context extends RolePlayer //Contexts can be RolePlayers too (i.e
 		$thisContextClass = get_class($this);
 		foreach ($this->rolePlayers as $rolePlayer) {
 			$rolePlayer->removeAllRolesForContext($thisContextClass);
+		}
+		//unbind all roles from sub-contexts as well
+		foreach ($this->subContexts as $subContext) {
+			$subContext->removeAllRoles();
 		}
 	}
 	

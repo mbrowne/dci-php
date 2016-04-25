@@ -4,9 +4,8 @@ namespace DCI;
 /**
  * DCI Role base class
  * 
- * In PHP 5.4 version this will be true:
- * (should never be used externally; this is used behind the scenes
- * to accomplish role binding.)
+ * Should never be used externally; this is used behind the scenes
+ * to accomplish role binding.
  */
 abstract class Role
 {
@@ -20,6 +19,8 @@ abstract class Role
 	 * @var Context
 	 */
 	protected $context;
+	
+	private $publicDataPropertyNames = array();
 
 	function __construct(RolePlayerInterface $data, Context $context) {
 		$this->data = $data;
@@ -31,6 +32,10 @@ abstract class Role
 	 * Get a data property
 	 */
 	function __get($propName) {
+		//TODO
+		//If this causes an undefined property notice, it does not currently report the line number
+		//where the error actually occurred. It may be possible to correct this using
+		//set_error_handler() to temporarily set the error handler to handle the "Undefined property" notice.
 		return $this->data->$propName;
 	}
 	
@@ -79,5 +84,26 @@ abstract class Role
 	 */
 	function getDataObject() {
 		return $this->data;
+	}
+	
+	/**
+	 * Returns whether the given property name is a public property of $this->data 
+	 * @param string
+	 * @return bool
+	 */
+	private function isPublicDataProperty($propName) {
+		//check if the property exists in the cached list of public properties
+		if (array_key_exists($propName, $this->publicDataPropertyNames)) {
+			return true;
+		}
+		//if it wasn't found in the cache, or if this method is being called for the first time,
+		//call get_object_vars() again in case the property isn't defined on the object's class but
+		//was dynamically added to it sometime after calling addRole(). Recall that PHP allows new
+		//properties (not defined in the class) to be added to an object at any time.
+		$this->publicDataPropertyNames = get_object_vars($this->data);
+		if (array_key_exists($propName, $this->publicDataPropertyNames)) {
+			return true;
+		}
+		return false;
 	}
 }

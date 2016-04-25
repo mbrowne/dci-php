@@ -1,14 +1,17 @@
-Documentation is forthcoming; in the meantime, for an introduction to DCI, see these introductory articles:
+The best place to start is probably the examples folder. Additional documentation for this library is not yet available
+(other than comments in the code), but in the meantime, for an introduction to DCI,
+see the article:
 
-http://fulloo.info/Documents/CommSenseCurrentDraft.pdf
+"Working with objects - in computer and mind"
+at http://fulloo.info/Documents/.
+
+Another good (albeit somewhat older) introductory article is:
 http://www.artima.com/articles/dci_vision.html
-
-For example usage, see the examples folder.
 
 For more articles and information about DCI, see:
 http://fulloo.info/
 
-and this book by DCI's co-creator, which has a chapter on DCI:
+And this book by DCI's co-creator, which has a chapter on DCI:
 Lean Architecture: for Agile Software Development
 James O. Coplien and Gertrud Bjørnvig
 

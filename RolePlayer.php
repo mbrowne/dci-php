@@ -2,9 +2,9 @@
 namespace DCI;
 
 /**
- * DCI base RolePlayer trait (should be made an actual trait in PHP 5.4)
- * All data/domain objects that could potentially be used as role players in
- * a DCI context should use this trait, or inherit from a base class that uses this trait
+ * DCI base RolePlayer trait
+ * All objects that could potentially be used as role players in a DCI context should use this trait,
+ * or inherit from a base class that uses this trait.
  * 
  * NOTE: In an ideal DCI implementation, it would be possible to override a data object method
  * "foo" with a role method also named "foo". Unfortunately, the __call() magic method in
@@ -12,7 +12,7 @@ namespace DCI;
  * object if there is a "foo" method defined there. So the names of role methods always need to be
  * different from any existing methods on the data class.
  */
-abstract class RolePlayer implements RolePlayerInterface
+trait RolePlayer
 {
 	/**
 	 * An array of the methods currently being played by this object,
@@ -48,15 +48,30 @@ abstract class RolePlayer implements RolePlayerInterface
 	 * @return \DCI\RolePlayer
 	 */
 	function addRole($roleName, Context $context) {
-		$this->_setCurrentContext($context);		
-		$roleClassName = $this->currentContextClassName.'\Roles\\'.$roleName;
+		$this->_setCurrentContext($context);
+		$roleNamespace = $this->currentContextClassName.'\Roles';
+		$roleTraitName = $roleNamespace.'\\'.$roleName;
 		
-		if (!class_exists($roleClassName, false)) {
-			throw new \InvalidArgumentException("The role '$roleClassName' is not defined
+		if (!trait_exists($roleTraitName, false)) {
+			throw new \InvalidArgumentException("The role '$roleTraitName' is not defined
 				(it should be defined in the same *file* as the context to which it belongs)."
 			);
 		}
 		
+		//We need a real class (and not just a trait) that extends DCI\Role in order to instantiate the role object
+		$roleClassName = $roleTraitName.'Class';
+		if (!class_exists($roleClassName, false)) {
+			//Check for collection-type role player (see bindRoleMethods() for an explanation of why we need this).
+			//TODO We shouldn't assume that role players implementing Iterator also implement
+			//ArrayAccess and Countable. It would be better to implement separate traits for each of these
+			//rather than the single DCI\CollectionRole class we have now.
+			if ($this instanceof \Iterator) {
+				$roleClass = 'CollectionRole';
+			}
+			else $roleClass = 'Role';
+			
+			eval('namespace '.$roleNamespace.'; class '.$roleName.'Class extends \DCI\\'.$roleClass.' {use \\'.$roleTraitName.';}');
+		}
 		$role = new $roleClassName($this, $context);
 		
 		$this->bindRoleMethods($role);
@@ -67,7 +82,7 @@ abstract class RolePlayer implements RolePlayerInterface
 		$roleMethods = &$this->roleMethods[get_class($context)];
 		if ($roleMethods) {
 			foreach ($roleMethods as $methodName => $role) {
-				if (preg_match('/\\'.$roleName.'$/i', get_class($role))) {
+				if (preg_match('/\\'.$roleName.'Class$/i', get_class($role))) {
 					unset($roleMethods[$methodName]);
 				}
 			}
@@ -90,14 +105,32 @@ abstract class RolePlayer implements RolePlayerInterface
 			$methodName = $method->name;
 			
 			//these methods are on the base Role class
-			if (in_array($methodName, array('__construct', '__get', '__set', '__isset', '__call', 'isPublicDataProperty', 'getDataObject')))
+			$roleClassMethods = ['__construct', '__get', '__set', '__isset', '__call', 'isPublicDataProperty', 'getDataObject'];
+			
+			//Check for collection-type role player.
+			//TODO We shouldn't assume that role players implementing Iterator also implement
+			//ArrayAccess and Countable. It would be better to implement separate traits for each of these
+			//rather than the single DCI\CollectionRole class we have now.
+			if ($this instanceof \Iterator) {
+				//If the role player implements the Iterator, ArrayAccess, and/or Countable interface,
+				//then instead of using DCI\Role we use DCI\CollectionRole in order to delegate to the
+				//methods implementing those interfaces, so we need to add some methods to the array of
+				//methods of the role class...
+				$roleClassMethods = array_merge($roleClassMethods, [
+					'current', 'key', 'next', 'rewind', 'valid', //Iterator
+					'offsetExists', 'offsetGet', 'offsetSet', 'offsetUnset', //ArrayAccess
+					'count' //Countable
+				]);
+			}
+			
+			if (in_array($methodName, $roleClassMethods))
 				continue;
 			
 			if (method_exists($this, $methodName)) {
 				//Technically it's only *public* methods on the data-object that truly can't be overridden by 
 				//role methods (because __call() is only called when a method isn't found), but we forbid it for
 				//private and protected methods as well, for consistency
-				throw new \Exception("The method '$methodName' already exists on the class '".get_class($this)."'.
+				throw new Exception("The method '$methodName' already exists on the class '".get_class($this)."'.
 					Due to limitations of PHP, a role method cannot override a data-object method of the same name.
 					Please rename one of the methods.");
 			}
@@ -105,7 +138,7 @@ abstract class RolePlayer implements RolePlayerInterface
 			if (array_key_exists($methodName, $existingRoleMethods)) {
 				$conflictingRole = $existingRoleMethods[$methodName];
 				$conflictingRoleClassName = get_class($conflictingRole);
-				throw new \Exception("Error binding role '".get_class($role)."': The method '$methodName' was already added via the role '$conflictingRoleClassName'.
+				throw new Exception("Error binding role '".get_class($role)."': The method '$methodName' was already added via the role '$conflictingRoleClassName'.
 					Please name it something different. (In a future version of this DCI library, multiple roles with
 					methods sharing the same name may be allowed, but this is not currently supported due to limitations of PHP).)");
 			}
@@ -142,23 +175,50 @@ abstract class RolePlayer implements RolePlayerInterface
 	
 	/**
 	 * IMPORTANT!
-	 * If subclasses implement __call(), they MUST call parent::__call()
-	 * (either before or after their own __call() logic) or else role methods will not work!
+	 * If data classes (or any class whose objects will need to play a role) implement __call(),
+	 * the overriden __call() method MUST call this __call() method or else role methods will not work!
+	 * (This method can be called either before or after the data class's own __call() logic.)
+	 *
+	 * Here is an example of how to do this:
+	 *
+	 * abstract class DataObject implements \DCI\RolePlayerInterface
+	 * {
+	 *     use \DCI\RolePlayer {
+	 *         __call as private RolePlayer__call;
+	 *     }
+	 *
+	 *     function __call($methodName, $args) {
+	 *         if ($this->hasRoleMethod($methodName)) {
+	 *             return $this->RolePlayer__call($methodName, $args);
+	 *         }
+	 *         //your custom __call() logic
+	 *     }
+	 *     ...
+	 * }
 	 */
 	function __call($methodName, $args) {
-		if (isset($this->roleMethods[$this->currentContextClassName][$methodName])) {
-			$role = $this->roleMethods[$this->currentContextClassName][$methodName];
-		}
-		if (!isset($role) || !method_exists($role, $methodName)) {
-			//This throws \DCI\BadMethodCallException instead of just \BadMethodCallException for an important reason.
-			//See \BadMethodCallException for what that reason is.
-			throw new \DCI\BadMethodCallException(
+		if (! $this->hasRoleMethod($methodName)) {
+			throw new \BadMethodCallException(
 				"There is no public method '$methodName' on class '".get_class($this)."' nor on any of the roles it is currently playing ".
 				"(note that it might not be playing any roles, in which case this is just a regular bad method call). ".
 				"If the role belongs to a context that acts as a sub-context in another context, make sure that the parent context initialized the ".
 				'sub-context correctly, e.g. $this->fooContext = $this->initSubContext(new \UseCases\Foo($arg1, $arg2)).');
+			
 		}
 		//Call $role->$methodName() with the given arguments
+		$role = $this->roleMethods[$this->currentContextClassName][$methodName];
 		return call_user_func_array(array($role, $methodName), $args);
+	}
+	
+	/**
+	 * Returns true if this object is currently playing a role with the given role method
+	 * @param string $methodName
+	 * @return bool
+	 */
+	public function hasRoleMethod($methodName) {
+		if (isset($this->roleMethods[$this->currentContextClassName][$methodName])) {
+			$role = $this->roleMethods[$this->currentContextClassName][$methodName];
+		}
+		return isset($role) && method_exists($role, $methodName);
 	}
 }

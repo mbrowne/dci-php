@@ -1,9 +1,11 @@
 <?php
-namespace DomainObjects;
+namespace DataObjects;
 
-class Account extends \DCI\RolePlayer
+class Account implements \DCI\RolePlayerInterface
 {
-	protected $balance = 0;
+	use \DCI\RolePlayer;
+
+	private $balance = 0;
 
 	function __construct($initialBalance) {
 		$this->balance = $initialBalance;
