@@ -20,15 +20,6 @@ abstract class Context
 	private $subContexts = array();
 	
 	/**
-	 * Rebind the context with different data objects.
-	 * This is equivalent to directly calling __construct() again on the context instance.
-	 */
-	function rebind() {
-		$this->removeAllRoles();
-		call_user_func_array(array($this, '__construct'), func_get_args());
-	}
-	
-	/**
 	 * Sub-contexts must be wrapped in ContextProxy objects in order to not interfere
 	 * with the role binding of the parent context. 
 	 * 
