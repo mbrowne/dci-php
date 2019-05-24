@@ -1,0 +1,37 @@
+{
+  "name": "dci/dci",
+  "type": "library",
+  "description": "Implementation of the DCI architecture in PHP using traits",
+  "keywords": ["architecture", "DCI", "roles", "context"],
+  "homepage": "https://github.com/mbrowne/dci-php",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Matt Browne",
+      "email": "mbrowne83@gmail.com",
+      "homepage": "https://github.com/mbrowne/dci-php",
+      "role": "Developer"
+    },
+    {
+      "name": "Keithy",
+      "email": "keithy@consultant.com",
+      "role": "User"
+    }
+  ],
+  "require": {
+    "php": "^5.5 || ^7.0"
+  },
+  "require-dev": {
+  },
+  "provide": {
+    "dci/implementation": "0.2"
+  },
+  "autoload": {
+    "classmap": ["DCI/"]
+  },
+  "autoload-dev": {
+    "classmap": ["examples/"]
+  },
+  "scripts": {
+  }
+}
