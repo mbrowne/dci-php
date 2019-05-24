@@ -1,5 +1,5 @@
 {
-  "name": "dci/dci",
+  "name": "mbrowne/dci",
   "type": "library",
   "description": "Implementation of the DCI architecture in PHP using traits",
   "keywords": ["architecture", "DCI", "roles", "context"],
