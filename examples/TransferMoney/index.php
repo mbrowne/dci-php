@@ -1,7 +1,7 @@
 <?php
 ini_set('display_errors', 1);
 
-set_include_path(__DIR__.'/../../');
+set_include_path(__DIR__.'/../../DCI');
 require('Role.php');
 require('RolePlayer.php');
 require('RolePlayerInterface.php');

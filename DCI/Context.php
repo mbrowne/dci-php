@@ -58,25 +58,6 @@ abstract class Context {
     }
 
     /**
-     * CodeIgniter-specific
-     * __get
-     *
-     * Allows contexts to access CI's loaded classes using the same
-     * syntax as controllers.
-     *
-     * @param	string
-     */
-    function __get($key) {
-        $val = null;
-        if (function_exists('get_instance')) {
-            $CI = get_instance();
-            $val = $CI->$key ?? null;
-        }
-        if ($val == null) trigger_error("Undefined property: \$$key", E_USER_NOTICE);
-        return $val;
-    }
-
-    /**
      * Unbind (remove) all roles upon exiting the context
      * (roles are ALWAYS context-specific, though there may be a role with the same name
      * in another context, that would be a different role)
