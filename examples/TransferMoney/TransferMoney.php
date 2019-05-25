@@ -55,8 +55,8 @@ namespace UseCases\TransferMoney\Roles
 		 * @param float $amount
 		 */
 		function transferOut($amount) {
-			$this->context->destinationAccount->deposit($amount);
 			$this->withdraw($amount);
+			$this->context->destinationAccount->deposit($amount);
 		}
 	}
 	
