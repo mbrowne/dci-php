@@ -156,7 +156,7 @@ trait RolePlayer
 		//so it should be safe to only set the context the first time addRole() is called
 		//from within a context (rather than every time addRole() is called)
 		if (empty($this->currentContext)) {
-			$this->currentCoontext = $context;
+			$this->currentContext = $context;
 			$this->currentContextClassName = get_class($context);
 		}
 	}
