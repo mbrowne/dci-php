@@ -79,7 +79,7 @@ abstract class Role
 	}
 	
 	/**
-	 * This method is pubilc so that it can be accessed by model and ORM classes only;
+	 * This method is public so that it can be accessed by model and ORM classes only;
 	 * generally it shouldn't be necessary to access the $data property directly
 	 */
 	function getDataObject() {
@@ -91,7 +91,7 @@ abstract class Role
 	 * @param string
 	 * @return bool
 	 */
-	private function isPublicDataProperty($propName) {
+	protected function isPublicDataProperty($propName) {
 		//check if the property exists in the cached list of public properties
 		if (array_key_exists($propName, $this->publicDataPropertyNames)) {
 			return true;
