@@ -6,6 +6,7 @@ require('Role.php');
 require('RolePlayer.php');
 require('RolePlayerInterface.php');
 require('Context.php');
+require('Exception.php');
 
 require('Account.php');
 require('TransferMoney.php');

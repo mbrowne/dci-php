@@ -11,42 +11,42 @@ namespace DCI;
 abstract class CollectionRole extends Role implements \Iterator, \ArrayAccess, \Countable
 {
 	function current() {
-		return $this->data->current();
+		return $this->self->current();
 	}
 
 	function key() {
-		return $this->data->key();
+		return $this->self->key();
 	}
 
 	function next() {
-		$this->data->next();
+		$this->self->next();
 	}
 	
 	function rewind() {
-		$this->data->rewind();
+		$this->self->rewind();
 	}
 	
 	function valid() {
-		return $this->data->valid();
+		return $this->self->valid();
 	}
 	
 	function offsetExists($offset) {
-		return $this->data->offsetExists($offset);
+		return $this->self->offsetExists($offset);
 	}
 	
 	function offsetGet($offset) {
-		return $this->data->offsetGet($offset);
+		return $this->self->offsetGet($offset);
 	}
 	
 	function offsetSet($offset, $value) {
-		$this->data->offsetSet($offset, $value);
+		$this->self->offsetSet($offset, $value);
 	}
 	
 	function offsetUnset($offset) {
-		$this->data->offsetUnset($offset);
+		$this->self->offsetUnset($offset);
 	}
 	
 	function count() {
-		return $this->data->count();
+		return $this->self->count();
 	}
 }

@@ -13,7 +13,7 @@ abstract class Role
 	 * The data object playing this role (the RolePlayer).
 	 * @var RolePlayerInterface
 	 */
-	protected $data;
+	private $data;
 	/**
 	 * The context to which this role belongs
 	 * @var Context
@@ -32,26 +32,11 @@ abstract class Role
 	 * Get a data property
 	 */
 	function __get($propName) {
-		//TODO
-		//If this causes an undefined property notice, it does not currently report the line number
-		//where the error actually occurred. It may be possible to correct this using
-		//set_error_handler() to temporarily set the error handler to handle the "Undefined property" notice.
-		return $this->data->$propName;
-	}
-	
-	/**
-	 * Set a data property
-	 */
-	function __set($propName, $val) {
-		$this->data->$propName = $val;
-	}
-	
-	/**
-	 * Returns whether or not the property is set on the data object.
-	 * Note that for private/protected properties, this will always return false.
-	 */
-	function __isset($propName) {
-		return isset($this->data->$propName);
+		if ($propName === 'self') {
+			return $this->data;
+		}
+		trigger_error('Undefined property: ' . static::class . "::\$$propName", E_USER_NOTICE);
+		return null;
 	}
 	
 	/**
@@ -76,14 +61,6 @@ abstract class Role
 				nor on any of the roles it's currently playing.");
 		}
 		return call_user_func_array(array($this->data, $methodName), $args);
-	}
-	
-	/**
-	 * This method is public so that it can be accessed by model and ORM classes only;
-	 * generally it shouldn't be necessary to access the $data property directly
-	 */
-	function getDataObject() {
-		return $this->data;
 	}
 	
 	/**
