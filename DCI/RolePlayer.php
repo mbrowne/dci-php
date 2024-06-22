@@ -72,7 +72,7 @@ trait RolePlayer
 			
 			eval('namespace '.$roleNamespace.'; class '.$roleName.'Class extends \DCI\\'.$roleClass.' {use \\'.$roleTraitName.';}');
 		}
-		$role = new $roleClassName($this, $context);
+		$role = new $roleClassName($this, $context, $roleName);
 		
 		$this->bindRoleMethods($role);
 		return $this;
@@ -105,7 +105,7 @@ trait RolePlayer
 			$methodName = $method->name;
 			
 			//these methods are on the base Role class
-			$roleClassMethods = ['__construct', '__get', '__set', '__isset', '__call', 'isPublicDataProperty', 'getDataObject'];
+			$roleClassMethods = ['__construct', '__get', '__set', '__call'];
 			
 			//Check for collection-type role player.
 			//TODO We shouldn't assume that role players implementing Iterator also implement

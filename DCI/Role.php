@@ -19,24 +19,31 @@ abstract class Role
 	 * @var Context
 	 */
 	protected $context;
-	
-	private $publicDataPropertyNames = array();
+	/**
+	 * The name of the role - just its local name within the context. Used for error messages.
+	 * @var string
+	 */
+	private $roleName;
 
-	function __construct(RolePlayerInterface $data, Context $context) {
+	function __construct(RolePlayerInterface $data, Context $context, $roleName) {
 		$this->data = $data;
 		$this->context = $context;
+		$this->roleName = $roleName;
 		$context->_addToInternalRolePlayerArray($data);
 	}
 	
 	/**
-	 * Get a data property
+	 * Implements $this->self from inside roles
 	 */
 	function __get($propName) {
 		if ($propName === 'self') {
 			return $this->data;
 		}
-		trigger_error('Undefined property: ' . static::class . "::\$$propName", E_USER_NOTICE);
-		return null;
+		throw new Exception("Cannot access property '$propName' via role '$this->roleName': roles can't access data properties directly, but only public methods.");
+	}
+
+	function __set($propName, $val) {
+		throw new Exception("Cannot set property '$propName' via role '$this->roleName': roles can't set data properties directly, but only via public methods.");
 	}
 	
 	/**
@@ -61,26 +68,5 @@ abstract class Role
 				nor on any of the roles it's currently playing.");
 		}
 		return call_user_func_array(array($this->data, $methodName), $args);
-	}
-	
-	/**
-	 * Returns whether the given property name is a public property of $this->data 
-	 * @param string
-	 * @return bool
-	 */
-	protected function isPublicDataProperty($propName) {
-		//check if the property exists in the cached list of public properties
-		if (array_key_exists($propName, $this->publicDataPropertyNames)) {
-			return true;
-		}
-		//if it wasn't found in the cache, or if this method is being called for the first time,
-		//call get_object_vars() again in case the property isn't defined on the object's class but
-		//was dynamically added to it sometime after calling addRole(). Recall that PHP allows new
-		//properties (not defined in the class) to be added to an object at any time.
-		$this->publicDataPropertyNames = get_object_vars($this->data);
-		if (array_key_exists($propName, $this->publicDataPropertyNames)) {
-			return true;
-		}
-		return false;
 	}
 }
