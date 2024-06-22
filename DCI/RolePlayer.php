@@ -72,7 +72,7 @@ trait RolePlayer
 			
 			eval('namespace '.$roleNamespace.'; class '.$roleName.'Class extends \DCI\\'.$roleClass.' {use \\'.$roleTraitName.';}');
 		}
-		$role = new $roleClassName($this, $context);
+		$role = new $roleClassName($this, $context, $roleName);
 		
 		$this->bindRoleMethods($role);
 		return $this;
