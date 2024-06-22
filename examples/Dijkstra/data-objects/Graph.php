@@ -5,37 +5,46 @@ class Graph implements \DCI\RolePlayerInterface
 {
     use \DCI\RolePlayer;
 
-    private ObjectMap $nodes;
+    private ObjectMap $nodeMap;
 
     public function __construct(Edge ...$edges) {
-        $this->nodes = new ObjectMap();
+        $this->nodeMap = new ObjectMap();
+
         foreach ($edges as $edge) {
-            $neighborsFrom = $this->ensureNeighborsMapCreated($edge->from());
-            $this->ensureNeighborsMapCreated($edge->to());
-            $neighborsFrom->set($edge->to(), $edge->distance());
+            $pathsFrom = $this->ensurePathMapCreated($edge->from());
+            $this->ensurePathMapCreated($edge->to());
+            $pathsFrom->set($edge->to(), $edge->distance());
         }
     }
 
-    private function ensureNeighborsMapCreated(Node $node) {
-        $neighbors = $this->nodes->get($node);
-        if (!$neighbors) {
-            $neighbors = new ObjectMap();
-            $this->nodes->set($node, $neighbors);
+    private function ensurePathMapCreated(Node $node) {
+        $paths = $this->nodeMap->get($node);
+        if (!$paths) {
+            $paths = new ObjectMap();
+            $this->nodeMap->set($node, $paths);
         }
-        return $neighbors;
+        return $paths;
     }
 
-    public function nodes() {
-        return $this->nodes;
+    public function allPaths() {
+        $cloned = new ObjectMap();
+        foreach ($this->nodeMap as $node => $paths) {
+            $cloned->set($node, clone $paths);
+        }
+        return $cloned;
     }
 
-    public function distanceBetween(Node $a, Node $b): float | null {
-        $neighbors = $this->nodes->get($a);
+    function pathsFrom(Node $n) {
+        return $this->nodeMap->get($n);
+    }
+
+    public function distanceBetween(Node $x, Node $y): float | null {
+        $neighbors = $this->nodeMap->get($x);
         if (!$neighbors) {
-            throw new \InvalidArgumentException("Node $a not found in graph");
+            throw new \InvalidArgumentException("Node $x not found in graph");
         }
         // note: this might return null, and will always be null for any edges
         // not explicitly defined (we don't create bidirectional edges automatically)
-        return $neighbors->get($b);
+        return $neighbors->get($y);
     }
 }

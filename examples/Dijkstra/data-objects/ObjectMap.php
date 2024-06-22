@@ -8,8 +8,9 @@ class ObjectMap implements \DCI\RolePlayerInterface, \IteratorAggregate, \Counta
 
     function __construct(array $keyValuePairs = []) {
         $this->storage = new \SplObjectStorage();
-        foreach ($keyValuePairs as $key => $value) {
-            $this->set($key, $value);
+        foreach ($keyValuePairs as $entry) {
+            list($key, $val) = $entry;
+            $this->set($key, $val);
         }
     }
 
@@ -30,6 +31,10 @@ class ObjectMap implements \DCI\RolePlayerInterface, \IteratorAggregate, \Counta
 
     public function remove($key) {
         $this->storage->detach($key);
+    }
+
+    public function contains($key) {
+        return $this->storage->contains($key);
     }
 
     public function count() {
