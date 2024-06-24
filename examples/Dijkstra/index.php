@@ -13,6 +13,7 @@ require('Edge.php');
 require('Graph.php');
 require('Node.php');
 require('ObjectMap.php');
+require('ObjectSet.php');
 require('CalculateShortestPath.php');
 
 function debug(...$messages) {

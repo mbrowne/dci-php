@@ -3,21 +3,22 @@ namespace UseCases
 {
     use DataObjects\Graph,
         DataObjects\Node,
-        DataObjects\ObjectMap;
+        DataObjects\ObjectMap,
+        DataObjects\ObjectSet;
 
 	class CalculateShortestPath extends \DCI\Context
 	{
 		// These would ideally be private but they need to be public so that the roles can
         // access them, since PHP doesn't support inner classes
         public Graph $graph;
-		public ObjectMap $unvisitedNodes;
+		public ObjectSet $unvisitedNodes;
         public Node $currentNode;
         public ObjectMap $shortestPathSegments;
 
         function __construct(Graph $graph) {
             $this->graph = $graph->addRole('Graph', $this);
 
-            $unvisitedNodes = $graph->allPaths();
+            $unvisitedNodes = new ObjectSet($graph->nodes());
             $this->unvisitedNodes = $unvisitedNodes->addRole('UnvisitedNodes', $this);
 
             $this->shortestPathSegments = (new ObjectMap())->addRole('ShortestPathSegments', $this);
@@ -33,7 +34,7 @@ namespace UseCases
                 [$startNode, 0]
             ]);
             $this->tentativeDistances = $tentativeDistances->addRole('TentativeDistances', $this);
-            foreach ($this->unvisitedNodes as $n => $distance) {
+            foreach ($this->unvisitedNodes as $n) {
                 // starting tentative value is infinity
                 $this->tentativeDistances->setDistanceTo($n, INF);
             }
@@ -141,11 +142,13 @@ namespace UseCases\CalculateShortestPath\Roles
             return $this->count() === 0;
         }
 
+        // possible refactoring:
+        // This could be StartNode.findClosestUnvisitedNode()
         function findClosestFromStart() {
             $this->context->currentNode->determineTentativeDistances();
 
             $tentativeDistances = $this->context->tentativeDistances;
-            $unvisitedNodes = $this->keys();
+            $unvisitedNodes = $this->toArray();
 
             return array_reduce(
                 $unvisitedNodes,
