@@ -12,6 +12,7 @@ namespace UseCases
         // access them, since PHP doesn't support inner classes
         public Graph $graph;
 		public ObjectSet $unvisitedNodes;
+        public Node $startNode;
         public Node $currentNode;
         public ObjectMap $shortestPathSegments;
 
@@ -27,6 +28,7 @@ namespace UseCases
         public function calculate(Node $startNode, Node $destinationNode) {
             assert($this->graph->contains($startNode) && $this->graph->contains($destinationNode));
 
+            $this->startNode = $startNode->addRole('StartNode', $this);
             $this->currentNode = $startNode->addRole('CurrentNode', $this);
             $this->currentNode->markVisited();
 
@@ -61,7 +63,7 @@ namespace UseCases
             if ( !$this->unvisitedNodes->hasNode($destinationNode) ) {
                 return null;
             }
-            return $this->unvisitedNodes->findClosestFromStart();
+            return $this->startNode->findClosestUnvisitedNode();
         }
     }
 }
@@ -128,6 +130,26 @@ namespace UseCases\CalculateShortestPath\Roles
         }   
     }
 
+    trait StartNode
+    {
+        function findClosestUnvisitedNode() {
+            $this->context->currentNode->determineTentativeDistances();
+
+            $tentativeDistances = $this->context->tentativeDistances;
+            $unvisitedNodes = $this->context->unvisitedNodes->nodesAsArray();
+
+            return array_reduce(
+                $unvisitedNodes,
+                function($x, $y) use ($tentativeDistances) {
+                    return $tentativeDistances->distanceTo($x) < $tentativeDistances->distanceTo($y)
+                        ? $x
+                        : $y;
+                },
+                $unvisitedNodes[0]
+            );
+        }
+    }
+
     trait UnvisitedNodes
     {
         function removeNode(Node $n) {
@@ -142,23 +164,8 @@ namespace UseCases\CalculateShortestPath\Roles
             return $this->count() === 0;
         }
 
-        // possible refactoring:
-        // This could be StartNode.findClosestUnvisitedNode()
-        function findClosestFromStart() {
-            $this->context->currentNode->determineTentativeDistances();
-
-            $tentativeDistances = $this->context->tentativeDistances;
-            $unvisitedNodes = $this->toArray();
-
-            return array_reduce(
-                $unvisitedNodes,
-                function($x, $y) use ($tentativeDistances) {
-                    return $tentativeDistances->distanceTo($x) < $tentativeDistances->distanceTo($y)
-                        ? $x
-                        : $y;
-                },
-                $unvisitedNodes[0]
-            );
+        function nodesAsArray() {
+            return $this->toArray();
         }
     }
 
