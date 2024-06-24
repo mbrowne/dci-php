@@ -116,12 +116,12 @@ namespace UseCases\CalculateShortestPath\Roles
             $currentNode = $this->context->currentNode;
             $tentativeDistances = $this->context->tentativeDistances;
 
-            $tentativeDistanceToNeighbor = $tentativeDistances->distanceTo($this->self);
+            $tentativeDistanceFromCurrent = $tentativeDistances->distanceTo($this->self);
 
             $distanceFromStartToCurrent = $tentativeDistances->distanceTo($currentNode);
             $netDistance = $distanceFromStartToCurrent + $currentNode->distanceTo($this->self);
 
-            if ($netDistance < $tentativeDistanceToNeighbor) {
+            if ($netDistance < $tentativeDistanceFromCurrent) {
                 $tentativeDistances->setDistanceTo($this->self, $netDistance);
                 $this->context->shortestPathSegments->setSegment($this->self, $this->context->currentNode);
             }
