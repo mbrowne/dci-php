@@ -136,7 +136,7 @@ namespace UseCases\CalculateShortestPath\Roles
             $this->context->currentNode->determineTentativeDistances();
 
             $tentativeDistances = $this->context->tentativeDistances;
-            $unvisitedNodes = $this->context->unvisitedNodes->nodesAsArray();
+            $unvisitedNodes = iterator_to_array($this->context->unvisitedNodes);
 
             return array_reduce(
                 $unvisitedNodes,
