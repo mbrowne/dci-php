@@ -29,11 +29,12 @@ namespace UseCases
             assert($this->graph->contains($startNode) && $this->graph->contains($destinationNode));
 
             $this->startNode = $startNode->addRole('StartNode', $this);
+            $this->destinationNode = $destinationNode->addRole('DestinationNode', $this);
             $this->currentNode = $startNode->addRole('CurrentNode', $this);
             $this->currentNode->markVisited();
 
             $tentativeDistances = new ObjectMap([
-                [$startNode, 0]
+                [$this->startNode, 0]
             ]);
             $this->tentativeDistances = $tentativeDistances->addRole('TentativeDistances', $this);
             foreach ($this->unvisitedNodes as $n) {
@@ -41,17 +42,15 @@ namespace UseCases
                 $this->tentativeDistances->setDistanceTo($n, INF);
             }
 
-            while ($closestFromStart = $this->processCurrentNode($destinationNode)) {
+            while ($closestFromStart = $this->processCurrentNode($this->destinationNode)) {
                 $this->currentNode = $closestFromStart->addRole('CurrentNode', $this);
             }
 
             $segments = [];
-            for ($n = $destinationNode; $n != $startNode; $n = $this->shortestPathSegments->getPreviousNode($n)) {
+            for ($n = $this->startNode; $n != $this->destinationNode; $n = $this->shortestPathSegments->getPreviousNode($n)) {
                 $segments[] = $n;
             }
-            $startToEnd = array_merge([$startNode], array_reverse($segments));
-
-            return $startToEnd;
+            return array_merge($segments, [$this->destinationNode]);
         }
 
         private function processCurrentNode(Node $destinationNode): Node | null {
@@ -86,6 +85,8 @@ namespace UseCases\CalculateShortestPath\Roles
 
     trait StartNode {}
 
+    trait DestinationNode {}
+
     trait CurrentNode
     {
         function determineTentativeDistances() {
@@ -116,14 +117,13 @@ namespace UseCases\CalculateShortestPath\Roles
             $currentNode = $this->context->currentNode;
             $tentativeDistances = $this->context->tentativeDistances;
 
-            $tentativeDistanceFromCurrent = $tentativeDistances->distanceTo($this->self);
-
             $distanceFromStartToCurrent = $tentativeDistances->distanceTo($currentNode);
             $netDistance = $distanceFromStartToCurrent + $currentNode->distanceTo($this->self);
 
-            if ($netDistance < $tentativeDistanceFromCurrent) {
+            if ($netDistance < $tentativeDistances->distanceTo($this->self)) {
                 $tentativeDistances->setDistanceTo($this->self, $netDistance);
-                $this->context->shortestPathSegments->setSegment($this->self, $this->context->currentNode);
+
+                $this->context->shortestPathSegments->setSegment($this->context->currentNode, $this->self);
             }
         }   
     }
