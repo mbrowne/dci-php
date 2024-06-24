@@ -26,16 +26,17 @@ namespace UseCases
         public function calculate(Node $startNode, Node $destinationNode) {
             assert($this->graph->contains($startNode) && $this->graph->contains($destinationNode));
 
+            $this->currentNode = $startNode->addRole('CurrentNode', $this);
+            $this->currentNode->markVisited();
+
             $tentativeDistances = new ObjectMap([
                 [$startNode, 0]
             ]);
-            $this->tentativeDistances = (new ObjectMap())->addRole('TentativeDistances', $this);
+            $this->tentativeDistances = $tentativeDistances->addRole('TentativeDistances', $this);
             foreach ($this->unvisitedNodes as $n => $distance) {
                 // starting tentative value is infinity
                 $this->tentativeDistances->setDistanceTo($n, INF);
             }
-
-            $this->currentNode = $startNode->addRole('CurrentNode', $this);
 
             while (!$this->unvisitedNodes->isEmpty()) {
                 $this->currentNode->markVisited();
@@ -43,13 +44,12 @@ namespace UseCases
                     break;
                 }
 
-                $closestNeighbor = $this->currentNode->closestNeighbor();
-                if (!$closestNeighbor) {
+                $closest = $this->unvisitedNodes->findClosestFromStart();
+                if (!$closest) {
                     break;
                 }
-                $this->shortestPathSegments->addSegment($closestNeighbor, $this->currentNode);
-
-                $this->currentNode = $closestNeighbor->addRole('CurrentNode', $this);
+                
+                $this->currentNode = $closest->addRole('CurrentNode', $this);
             }
 
             $segments = [];
@@ -89,24 +89,11 @@ namespace UseCases\CalculateShortestPath\Roles
 
     trait CurrentNode
     {
-        function closestNeighbor() {
-            $unvisitedNeighbors = $this->unvisitedNeighbors();
-            $tentativeDistances = $this->context->tentativeDistances;
-
+        function determineTentativeDistances() {
             foreach ($this->unvisitedNeighbors() as $neighbor) {
                 $neighbor->addRole('Neighbor', $this->context);
-                $neighbor->setTentativeDistance();
+                $neighbor->determineTentativeDistance();
             }
-
-            return array_reduce(
-                $unvisitedNeighbors,
-                function($x, $y) use ($tentativeDistances) {
-                    return $tentativeDistances->distanceTo($x) < $tentativeDistances->distanceTo($y)
-                        ? $x
-                        : $y;
-                },
-                $unvisitedNeighbors[0]
-            );
         }
 
         private function unvisitedNeighbors() {
@@ -126,21 +113,18 @@ namespace UseCases\CalculateShortestPath\Roles
 
     trait Neighbor
     {
-        function setTentativeDistance() {
+        function determineTentativeDistance() {
             $currentNode = $this->context->currentNode;
             $tentativeDistances = $this->context->tentativeDistances;
 
             $tentativeDistanceToNeighbor = $tentativeDistances->distanceTo($this->self);
 
-            // THIS IS NOT WORKING CORRECTLY.
-            // IT'S ALWAYS RETURNING INFINITY
             $distanceFromStartToCurrent = $tentativeDistances->distanceTo($currentNode);
-            debug('distanceFromStartToCurrent', $distanceFromStartToCurrent);
-
             $netDistance = $distanceFromStartToCurrent + $currentNode->distanceTo($this->self);
 
             if ($netDistance < $tentativeDistanceToNeighbor) {
                 $tentativeDistances->setDistanceTo($this->self, $netDistance);
+                $this->context->shortestPathSegments->addSegment($this->self, $this->context->currentNode);
             }
         }   
     }
@@ -157,6 +141,23 @@ namespace UseCases\CalculateShortestPath\Roles
 
         function isEmpty() {
             return $this->count() === 0;
+        }
+
+        function findClosestFromStart() {
+            $this->context->currentNode->determineTentativeDistances();
+            
+            $tentativeDistances = $this->context->tentativeDistances;
+            $unvisitedNodes = $this->keys();
+
+            return array_reduce(
+                $unvisitedNodes,
+                function($x, $y) use ($tentativeDistances) {
+                    return $tentativeDistances->distanceTo($x) < $tentativeDistances->distanceTo($y)
+                        ? $x
+                        : $y;
+                },
+                $unvisitedNodes[0]
+            );
         }
     }
 
