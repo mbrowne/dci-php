@@ -51,10 +51,6 @@ namespace UseCases
             }
             $startToEnd = array_merge([$startNode], array_reverse($segments));
 
-            foreach ($startToEnd as $n) {
-                debug($n);
-            }
-
             return $startToEnd;
         }
 
