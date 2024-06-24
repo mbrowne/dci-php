@@ -30,8 +30,12 @@ class Graph implements \DCI\RolePlayerInterface
         return $this->paths->keys();
     }
 
-    function pathsFrom(Node $n) {
+    public function pathsFrom(Node $n) {
         return $this->paths->get($n);
+    }
+
+    public function contains(Node $n) {
+        return $this->paths->contains($n);
     }
 
     public function distanceBetween(Node $x, Node $y): float | null {
