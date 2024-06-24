@@ -38,18 +38,8 @@ namespace UseCases
                 $this->tentativeDistances->setDistanceTo($n, INF);
             }
 
-            while (!$this->unvisitedNodes->isEmpty()) {
-                $this->currentNode->markVisited();
-                if ( !$this->unvisitedNodes->hasNode($destinationNode) ) {
-                    break;
-                }
-
-                $closest = $this->unvisitedNodes->findClosestFromStart();
-                if (!$closest) {
-                    break;
-                }
-                
-                $this->currentNode = $closest->addRole('CurrentNode', $this);
+            while ($closestFromStart = $this->processCurrentNode($destinationNode)) {
+                $this->currentNode = $closestFromStart->addRole('CurrentNode', $this);
             }
 
             $segments = [];
@@ -63,6 +53,14 @@ namespace UseCases
             }
 
             return $startToEnd;
+        }
+
+        private function processCurrentNode(Node $destinationNode): Node | null {
+            $this->currentNode->markVisited();
+            if ( !$this->unvisitedNodes->hasNode($destinationNode) ) {
+                return null;
+            }
+            return $this->unvisitedNodes->findClosestFromStart();
         }
     }
 }
@@ -124,7 +122,7 @@ namespace UseCases\CalculateShortestPath\Roles
 
             if ($netDistance < $tentativeDistanceToNeighbor) {
                 $tentativeDistances->setDistanceTo($this->self, $netDistance);
-                $this->context->shortestPathSegments->addSegment($this->self, $this->context->currentNode);
+                $this->context->shortestPathSegments->setSegment($this->self, $this->context->currentNode);
             }
         }   
     }
@@ -145,7 +143,7 @@ namespace UseCases\CalculateShortestPath\Roles
 
         function findClosestFromStart() {
             $this->context->currentNode->determineTentativeDistances();
-            
+
             $tentativeDistances = $this->context->tentativeDistances;
             $unvisitedNodes = $this->keys();
 
@@ -174,7 +172,7 @@ namespace UseCases\CalculateShortestPath\Roles
 
     trait ShortestPathSegments
     {
-        function addSegment(Node $from, Node $to) {
+        function setSegment(Node $from, Node $to) {
             $this->set($from, $to);
         }
 
