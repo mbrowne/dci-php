@@ -47,7 +47,7 @@ namespace UseCases
             }
 
             $segments = [];
-            for ($n = $this->startNode; $n != $this->destinationNode; $n = $this->shortestPathSegments->getPreviousNode($n)) {
+            for ($n = $this->startNode; $n != $this->destinationNode; $n = $this->shortestPathSegments->getNextNode($n)) {
                 $segments[] = $n;
             }
             return array_merge($segments, [$this->destinationNode]);
@@ -92,7 +92,7 @@ namespace UseCases\CalculateShortestPath\Roles
         function determineTentativeDistances() {
             foreach ($this->unvisitedNeighbors() as $neighbor) {
                 $neighbor->addRole('Neighbor', $this->context);
-                $neighbor->determineTentativeDistance();
+                $neighbor->determineDistanceAndPathSegment();
             }
         }
 
@@ -113,7 +113,7 @@ namespace UseCases\CalculateShortestPath\Roles
 
     trait Neighbor
     {
-        function determineTentativeDistance() {
+        function determineDistanceAndPathSegment() {
             $currentNode = $this->context->currentNode;
             $tentativeDistances = $this->context->tentativeDistances;
 
@@ -179,7 +179,7 @@ namespace UseCases\CalculateShortestPath\Roles
             $this->set($from, $to);
         }
 
-        function getPreviousNode(Node $n) {
+        function getNextNode(Node $n) {
             return $this->get($n);
         }
     }
