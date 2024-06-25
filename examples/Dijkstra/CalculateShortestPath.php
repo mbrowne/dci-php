@@ -89,10 +89,12 @@ namespace UseCases\CalculateShortestPath\Roles
 
     trait CurrentNode
     {
-        function determineTentativeDistances() {
+        function determineNextInPath() {
             foreach ($this->unvisitedNeighbors() as $neighbor) {
                 $neighbor->addRole('Neighbor', $this->context);
-                $neighbor->determineDistanceAndPathSegment();
+                if ($neighbor->attemptShortcut()) {
+                    $this->context->shortestPathSegments->setSegment($this->self, $neighbor);
+                }
             }
         }
 
@@ -113,19 +115,21 @@ namespace UseCases\CalculateShortestPath\Roles
 
     trait Neighbor
     {
-        function determineDistanceAndPathSegment() {
-            $currentNode = $this->context->currentNode;
+        // Is there a shorter path (from the start node to this node) than previously
+        // determined?
+        function attemptShortcut() {
             $tentativeDistances = $this->context->tentativeDistances;
+            $currentNode = $this->context->currentNode;
 
             $distanceFromStartToCurrent = $tentativeDistances->distanceTo($currentNode);
             $netDistance = $distanceFromStartToCurrent + $currentNode->distanceTo($this->self);
 
             if ($netDistance < $tentativeDistances->distanceTo($this->self)) {
                 $tentativeDistances->setDistanceTo($this->self, $netDistance);
-
-                $this->context->shortestPathSegments->setSegment($this->context->currentNode, $this->self);
+                return true;
             }
-        }   
+            return false;
+        }
     }
 
     trait UnvisitedNodes
@@ -145,7 +149,7 @@ namespace UseCases\CalculateShortestPath\Roles
         // possible refactoring:
         // This could be StartNode.findClosestUnvisitedNode()
         function findClosestFromStart() {
-            $this->context->currentNode->determineTentativeDistances();
+            $this->context->currentNode->determineNextInPath();
 
             $tentativeDistances = $this->context->tentativeDistances;
             $unvisitedNodes = $this->toArray();
