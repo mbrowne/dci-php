@@ -46,11 +46,15 @@ namespace UseCases
                 $this->currentNode = $closestFromStart->addRole('CurrentNode', $this);
             }
 
-            $segments = [];
-            for ($n = $this->startNode; $n != $this->destinationNode; $n = $this->shortestPathSegments->getNextNode($n)) {
+            for (
+                $n = $this->destinationNode;
+                $n != $this->startNode;
+                $n = $this->shortestPathSegments->getPreviousNode($n)
+            ) {
                 $segments[] = $n;
             }
-            return array_merge($segments, [$this->destinationNode]);
+            $startToEnd = array_reverse($segments);
+            return array_merge([$this->startNode], $startToEnd);
         }
 
         private function processCurrentNode(Node $destinationNode): Node | null {
@@ -89,11 +93,11 @@ namespace UseCases\CalculateShortestPath\Roles
 
     trait CurrentNode
     {
-        function determineNextInPath() {
+        function determinePreviousInPath() {
             foreach ($this->unvisitedNeighbors() as $neighbor) {
                 $neighbor->addRole('Neighbor', $this->context);
-                if ($neighbor->attemptShortcut()) {
-                    $this->context->shortestPathSegments->setSegment($this->self, $neighbor);
+                if ($neighbor->shorterPathAvailable()) {
+                    $this->context->shortestPathSegments->setSegment($neighbor, $this->self);
                 }
             }
         }
@@ -117,7 +121,7 @@ namespace UseCases\CalculateShortestPath\Roles
     {
         // Is there a shorter path (from the start node to this node) than previously
         // determined?
-        function attemptShortcut() {
+        function shorterPathAvailable() {
             $tentativeDistances = $this->context->tentativeDistances;
             $currentNode = $this->context->currentNode;
 
@@ -149,7 +153,7 @@ namespace UseCases\CalculateShortestPath\Roles
         // possible refactoring:
         // This could be StartNode.findClosestUnvisitedNode()
         function findClosestFromStart() {
-            $this->context->currentNode->determineNextInPath();
+            $this->context->currentNode->determinePreviousInPath();
 
             $tentativeDistances = $this->context->tentativeDistances;
             $unvisitedNodes = $this->toArray();
@@ -183,7 +187,7 @@ namespace UseCases\CalculateShortestPath\Roles
             $this->set($from, $to);
         }
 
-        function getNextNode(Node $n) {
+        function getPreviousNode(Node $n) {
             return $this->get($n);
         }
     }
