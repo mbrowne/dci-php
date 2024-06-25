@@ -42,8 +42,8 @@ namespace UseCases
                 $this->tentativeDistances->setDistanceTo($n, INF);
             }
 
-            while ($closestFromStart = $this->processCurrentNode($this->destinationNode)) {
-                $this->currentNode = $closestFromStart->addRole('CurrentNode', $this);
+            while ($closestToDestination = $this->processCurrentNode($this->destinationNode)) {
+                $this->currentNode = $closestToDestination->addRole('CurrentNode', $this);
             }
 
             for (
@@ -62,7 +62,7 @@ namespace UseCases
             if ( !$this->unvisitedNodes->hasNode($destinationNode) ) {
                 return null;
             }
-            return $this->unvisitedNodes->findClosestFromStart();
+            return $this->unvisitedNodes->findClosestToDestination();
         }
     }
 }
@@ -119,14 +119,14 @@ namespace UseCases\CalculateShortestPath\Roles
 
     trait Neighbor
     {
-        // Is there a shorter path (from the start node to this node) than previously
+        // Is there a shorter path (from this node to the destination) than previously
         // determined?
         function shorterPathAvailable() {
             $tentativeDistances = $this->context->tentativeDistances;
             $currentNode = $this->context->currentNode;
 
-            $distanceFromStartToCurrent = $tentativeDistances->distanceTo($currentNode);
-            $netDistance = $distanceFromStartToCurrent + $currentNode->distanceTo($this->self);
+            $distanceFromCurrentToDestination = $tentativeDistances->distanceTo($currentNode);
+            $netDistance = $distanceFromCurrentToDestination + $currentNode->distanceTo($this->self);
 
             if ($netDistance < $tentativeDistances->distanceTo($this->self)) {
                 $tentativeDistances->setDistanceTo($this->self, $netDistance);
@@ -150,9 +150,12 @@ namespace UseCases\CalculateShortestPath\Roles
             return $this->count() === 0;
         }
 
+        // QUESTION: Is this actually the closest from the START?
+        // Need to double-check
+        //
         // possible refactoring:
-        // This could be StartNode.findClosestUnvisitedNode()
-        function findClosestFromStart() {
+        // This could be DestinationNode.findClosestUnvisitedNode()
+        function findClosestToDestination() {
             $this->context->currentNode->determinePreviousInPath();
 
             $tentativeDistances = $this->context->tentativeDistances;
