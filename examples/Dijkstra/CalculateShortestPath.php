@@ -198,6 +198,9 @@ namespace UseCases\CalculateShortestPath\Roles
 
             $tentativeDistances = $this->context->tentativeDistances;
             $unvisitedNodes = $this->toArray();
+            if (empty($unvisitedNodes)) {
+                return null;
+            }
 
             $ret = array_reduce(
                 $unvisitedNodes,
