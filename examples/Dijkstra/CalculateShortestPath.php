@@ -10,16 +10,10 @@
     1. Mark all nodes as unvisited. Create a set of all the unvisited nodes.
 
     2. Assign to every node a tentative distance from start value: for the starting node,
-    it is zero, and for all other nodes, it is infinity.
+    it is zero, and for all other nodes, it is infinity. Set the starting node as the
+    current node.
 
-    3. From the unvisited set, select the current node to be the one with the smallest
-    finite distance; initially, this will be the starting node, which has distance zero.
-    If the unvisited set is empty, or contains only nodes with infinite distance (which
-    are unreachable), then stop - the algorithm is finished. In this implementation we
-    are only concerned about the path to the destination node, so we also terminate here
-    if the current node is the destination node.
-
-    4. For the current node, consider all of its unvisited neighbors and update their
+    3. For the current node, consider all of its unvisited neighbors and update their
     distances through the current node; compare the newly calculated distance to the one
     currently assigned to the neighbor and assign it the smaller one. For example, if the
     current node A is marked with a distance of 6, and the edge connecting it with its
@@ -28,9 +22,14 @@
     through A is shorter). Otherwise, keep its current distance (the path to B through A
     is not the shortest).
 
-    5. When we are done considering all of the unvisited neighbors of the current node,
+    4. When we are done considering all of the unvisited neighbors of the current node,
     mark the current node as visited and remove it from the unvisited set. A visited node
     is never checked again.
+
+    5. If the unvisited set is empty, or contains only nodes with infinite distance
+    (which are unreachable), then stop - the algorithm is finished. In this
+    implementation we are only concerned about the path to the destination node, so we
+    also terminate here if the current node is the destination node.
     
     6. Select the unvisited node that is marked with the smallest tentative distance, and
     set it as the new current node, then go back to step 3.
