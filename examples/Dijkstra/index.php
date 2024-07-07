@@ -46,7 +46,7 @@ foreach ($edgeData as $edge) {
 $graph = new \DataObjects\Graph(...$edges);
 
 $context = new UseCases\CalculateShortestPath($graph);
-$shortestPath = $context->calculate($a, $i);
+$shortestPath = $context->shortestPathFrom($a, $i);
 
 echo "Shortest path:\n";
 echo implode(' -> ', $shortestPath) . "\n";

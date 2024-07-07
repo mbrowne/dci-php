@@ -25,7 +25,7 @@ namespace UseCases
             $this->shortestPathSegments = (new ObjectMap())->addRole('ShortestPathSegments', $this);
         }
 
-        public function calculate(Node $startNode, Node $destinationNode) {
+        public function shortestPathFrom(Node $startNode, Node $destinationNode) {
             assert($this->graph->contains($startNode) && $this->graph->contains($destinationNode));
 
             $this->startNode = $startNode->addRole('StartNode', $this);
@@ -42,7 +42,7 @@ namespace UseCases
                 $this->tentativeDistances->setDistanceTo($n, INF);
             }
 
-            while ($closestFromStart = $this->processCurrentNode($this->destinationNode)) {
+            while ($closestFromStart = $this->processCurrentNode()) {
                 $this->currentNode = $closestFromStart->addRole('CurrentNode', $this);
             }
 
@@ -57,9 +57,9 @@ namespace UseCases
             return array_merge([$this->startNode], $startToEnd);
         }
 
-        private function processCurrentNode(Node $destinationNode): Node | null {
+        private function processCurrentNode(): Node | null {
             $this->currentNode->markVisited();
-            if ( !$this->unvisitedNodes->hasNode($destinationNode) ) {
+            if ( !$this->unvisitedNodes->hasNode($this->destinationNode) ) {
                 return null;
             }
             return $this->unvisitedNodes->findClosestFromStart();
@@ -158,7 +158,7 @@ namespace UseCases\CalculateShortestPath\Roles
             $tentativeDistances = $this->context->tentativeDistances;
             $unvisitedNodes = $this->toArray();
 
-            return array_reduce(
+            $ret = array_reduce(
                 $unvisitedNodes,
                 function($x, $y) use ($tentativeDistances) {
                     return $tentativeDistances->distanceTo($x) < $tentativeDistances->distanceTo($y)
@@ -167,6 +167,7 @@ namespace UseCases\CalculateShortestPath\Roles
                 },
                 $unvisitedNodes[0]
             );
+            return $ret;
         }
     }
 
@@ -181,6 +182,7 @@ namespace UseCases\CalculateShortestPath\Roles
         }
     }
 
+    // shortest paths from each node back to the start
     trait ShortestPathSegments
     {
         function setSegment(Node $from, Node $to) {
