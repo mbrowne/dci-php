@@ -27,10 +27,6 @@ class ObjectSet extends \SplObjectStorage implements \DCI\RolePlayerInterface, \
     }
 
     public function toArray() {
-        $items = [];
-        foreach ($this as $item) {
-            $items[] = $item;
-        }
-        return $items;
+        return iterator_to_array($this);
     }
 }

@@ -1,4 +1,9 @@
 <?php
+/**
+ * This example implements the Dijkstra algorithm to find the shortest path between
+ * two nodes in a graph.
+ */
+
 ini_set('display_errors', 1);
 set_include_path(__DIR__ . '/../../DCI' . ':' . __DIR__ . '/data-objects');
 
@@ -25,18 +30,35 @@ foreach ($nodeIds as $nodeId) {
     $$nodeId = new \DataObjects\Node($nodeId);
 }
 
+/**
+ * A fictional section of the street grid of Manhattan.
+ * Avenues run east to west and are longer than streets, which run north to south.
+ * 
+ * The numbers (weights) of the graph represent traffic that makes that path slower.
+ * 
+ *    a - 3 - b - 4 - c
+ *    |       |       |
+ *    1       2       1
+ *    |       |       |
+ *    d - 3 - e - 3 - f
+ *    |               |
+ *    2               3
+ *    |               |
+ *    g - 3 - h - 4 - i
+ */
+
 $edgeData = [
-    [$a, $b, 2],
+    [$a, $b, 3],
     [$a, $d, 1],
-    [$b, $c, 3],
+    [$b, $c, 4],
     [$b, $e, 2],
     [$c, $f, 1],
-    [$d, $e, 1],
+    [$d, $e, 3],
     [$d, $g, 2],
-    [$e, $f, 1],
+    [$e, $f, 3],
     [$f, $i, 4],
-    [$g, $h, 1],
-    [$h, $i, 2],
+    [$g, $h, 3],
+    [$h, $i, 4],
 ];
 
 $edges = [];
@@ -46,7 +68,7 @@ foreach ($edgeData as $edge) {
 $graph = new \DataObjects\Graph(...$edges);
 
 $context = new UseCases\CalculateShortestPath($graph);
-$shortestPath = $context->calculate($a, $i);
+$shortestPath = $context->shortestPathFrom($a, $i);
 
 echo "Shortest path:\n";
 echo implode(' -> ', $shortestPath) . "\n";

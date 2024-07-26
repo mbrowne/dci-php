@@ -1,4 +1,44 @@
 <?php
+/*
+  Algorithm
+  (see https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm for more details)
+
+  Let us choose a starting node, and let the distance of node N be the distance from the
+  starting node to N. Dijkstra's algorithm will initially start with infinite distances
+  and will try to improve them step by step.
+
+    1. Mark all nodes as unvisited. Create a set of all the unvisited nodes.
+
+    2. Assign to every node a tentative distance from start value: for the starting node,
+    it is zero, and for all other nodes, it is infinity. Set the starting node as the
+    current node.
+
+    3. For the current node, consider all of its unvisited neighbors and update their
+    distances through the current node; compare the newly calculated distance to the one
+    currently assigned to the neighbor and assign it the smaller one. For example, if the
+    current node A is marked with a distance of 6, and the edge connecting it with its
+    neighbor B has length 2, then the distance to B through A is 6 + 2 = 8. If B was
+    previously marked with a distance greater than 8, then update it to 8 (the path to B
+    through A is shorter). Otherwise, keep its current distance (the path to B through A
+    is not the shortest).
+
+    4. When we are done considering all of the unvisited neighbors of the current node,
+    mark the current node as visited and remove it from the unvisited set. A visited node
+    is never checked again.
+
+    5. If the unvisited set is empty, or contains only nodes with infinite distance
+    (which are unreachable), then stop - the algorithm is finished. In this
+    implementation we are only concerned about the path to the destination node, so we
+    also terminate here if the current node is the destination node.
+    
+    6. Select the unvisited node that is marked with the smallest tentative distance, and
+    set it as the new current node, then go back to step 3.
+
+  Once the loop exits (steps 3–5), we will know the shortest distance from the starting
+  node to every visited node.
+ */
+
+
 namespace UseCases
 {
     use DataObjects\Graph,
@@ -25,15 +65,16 @@ namespace UseCases
             $this->shortestPathSegments = (new ObjectMap())->addRole('ShortestPathSegments', $this);
         }
 
-        public function calculate(Node $startNode, Node $destinationNode) {
+        public function shortestPathFrom(Node $startNode, Node $destinationNode) {
             assert($this->graph->contains($startNode) && $this->graph->contains($destinationNode));
 
             $this->startNode = $startNode->addRole('StartNode', $this);
+            $this->destinationNode = $destinationNode->addRole('DestinationNode', $this);
             $this->currentNode = $startNode->addRole('CurrentNode', $this);
             $this->currentNode->markVisited();
 
             $tentativeDistances = new ObjectMap([
-                [$startNode, 0]
+                [$this->startNode, 0]
             ]);
             $this->tentativeDistances = $tentativeDistances->addRole('TentativeDistances', $this);
             foreach ($this->unvisitedNodes as $n) {
@@ -41,22 +82,24 @@ namespace UseCases
                 $this->tentativeDistances->setDistanceTo($n, INF);
             }
 
-            while ($closestFromStart = $this->processCurrentNode($destinationNode)) {
+            while ($closestFromStart = $this->processCurrentNode()) {
                 $this->currentNode = $closestFromStart->addRole('CurrentNode', $this);
             }
 
-            $segments = [];
-            for ($n = $destinationNode; $n != $startNode; $n = $this->shortestPathSegments->getPreviousNode($n)) {
+            for (
+                $n = $this->destinationNode;
+                $n != $this->startNode;
+                $n = $this->shortestPathSegments->getPreviousNode($n)
+            ) {
                 $segments[] = $n;
             }
-            $startToEnd = array_merge([$startNode], array_reverse($segments));
-
-            return $startToEnd;
+            $startToEnd = array_reverse($segments);
+            return array_merge([$this->startNode], $startToEnd);
         }
 
-        private function processCurrentNode(Node $destinationNode): Node | null {
+        private function processCurrentNode(): Node | null {
             $this->currentNode->markVisited();
-            if ( !$this->unvisitedNodes->hasNode($destinationNode) ) {
+            if ( !$this->unvisitedNodes->hasNode($this->destinationNode) ) {
                 return null;
             }
             return $this->startNode->findClosestUnvisitedNode();
@@ -86,10 +129,12 @@ namespace UseCases\CalculateShortestPath\Roles
 
     trait CurrentNode
     {
-        function determineTentativeDistances() {
+        function determinePreviousInPath() {
             foreach ($this->unvisitedNeighbors() as $neighbor) {
                 $neighbor->addRole('Neighbor', $this->context);
-                $neighbor->determineTentativeDistance();
+                if ($neighbor->shorterPathAvailable()) {
+                    $this->context->shortestPathSegments->setSegment($neighbor, $this->self);
+                }
             }
         }
 
@@ -110,29 +155,33 @@ namespace UseCases\CalculateShortestPath\Roles
 
     trait Neighbor
     {
-        function determineTentativeDistance() {
-            $currentNode = $this->context->currentNode;
+        // Is there a shorter path (from the start node to this node) than previously
+        // determined?
+        function shorterPathAvailable() {
             $tentativeDistances = $this->context->tentativeDistances;
-
-            $tentativeDistanceToNeighbor = $tentativeDistances->distanceTo($this->self);
+            $currentNode = $this->context->currentNode;
 
             $distanceFromStartToCurrent = $tentativeDistances->distanceTo($currentNode);
             $netDistance = $distanceFromStartToCurrent + $currentNode->distanceTo($this->self);
 
-            if ($netDistance < $tentativeDistanceToNeighbor) {
+            if ($netDistance < $tentativeDistances->distanceTo($this->self)) {
                 $tentativeDistances->setDistanceTo($this->self, $netDistance);
-                $this->context->shortestPathSegments->setSegment($this->self, $this->context->currentNode);
+                return true;
             }
-        }   
+            return false;
+        }
     }
 
     trait StartNode
     {
         function findClosestUnvisitedNode() {
-            $this->context->currentNode->determineTentativeDistances();
+            $this->context->currentNode->determinePreviousInPath();
 
             $tentativeDistances = $this->context->tentativeDistances;
             $unvisitedNodes = iterator_to_array($this->context->unvisitedNodes);
+            if (empty($unvisitedNodes)) {
+                return null;
+            }
 
             return array_reduce(
                 $unvisitedNodes,
@@ -145,6 +194,8 @@ namespace UseCases\CalculateShortestPath\Roles
             );
         }
     }
+
+    trait DestinationNode {}
 
     trait UnvisitedNodes
     {
@@ -159,10 +210,6 @@ namespace UseCases\CalculateShortestPath\Roles
         function isEmpty() {
             return $this->count() === 0;
         }
-
-        function nodesAsArray() {
-            return $this->toArray();
-        }
     }
 
     trait TentativeDistances
@@ -176,6 +223,7 @@ namespace UseCases\CalculateShortestPath\Roles
         }
     }
 
+    // shortest paths from each node back to the start
     trait ShortestPathSegments
     {
         function setSegment(Node $from, Node $to) {
