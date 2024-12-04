@@ -86,6 +86,7 @@ namespace UseCases
                 $this->currentNode = $nextUnvisitedNode->addRole('CurrentNode', $this);
             }
 
+            $segments = [];
             for (
                 $n = $this->destinationNode;
                 $n != $this->startNode;
