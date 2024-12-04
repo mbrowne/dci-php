@@ -58,15 +58,14 @@ namespace UseCases
 
         function __construct(Graph $graph) {
             $this->graph = $graph->addRole('Graph', $this);
-
-            $unvisitedNodes = new ObjectSet($graph->nodes());
-            $this->unvisitedNodes = $unvisitedNodes->addRole('UnvisitedNodes', $this);
-
-            $this->shortestPathSegments = (new ObjectMap())->addRole('ShortestPathSegments', $this);
         }
 
         public function shortestPathFrom(Node $startNode, Node $destinationNode) {
             assert($this->graph->contains($startNode) && $this->graph->contains($destinationNode));
+
+            $unvisitedNodes = new ObjectSet($this->graph->nodes());
+            $this->unvisitedNodes = $unvisitedNodes->addRole('UnvisitedNodes', $this);
+            $this->shortestPathSegments = (new ObjectMap())->addRole('ShortestPathSegments', $this);
 
             $this->startNode = $startNode->addRole('StartNode', $this);
             $this->destinationNode = $destinationNode->addRole('DestinationNode', $this);
