@@ -132,7 +132,7 @@ namespace UseCases\CalculateShortestPath\Roles
 
         function determinePreviousInPath() {
             foreach ($this->unvisitedNeighbors() as $neighbor) {
-                $neighbor->addRole('Neighbor', $this->context);
+                $neighbor->addRole('NeighborNode', $this->context);
                 if ($neighbor->shorterPathAvailable()) {
                     $this->context->shortestPathSegments->setSegment($neighbor, $this->self);
                 }
@@ -154,7 +154,7 @@ namespace UseCases\CalculateShortestPath\Roles
         }
     }
 
-    trait Neighbor
+    trait NeighborNode
     {
         // Is there a shorter path (from the start node to this node) than previously
         // determined?
