@@ -46,12 +46,12 @@ namespace UseCases
         DataObjects\ObjectMap,
         DataObjects\ObjectSet;
 
-	class CalculateShortestPath extends \DCI\Context
-	{
-		// These would ideally be private but they need to be public so that the roles can
+    class CalculateShortestPath extends \DCI\Context
+    {
+        // These would ideally be private but they need to be public so that the roles can
         // access them, since PHP doesn't support inner classes
         public Graph $graph;
-		public ObjectSet $unvisitedNodes;
+        public ObjectSet $unvisitedNodes;
         public Node $startNode;
         public Node $currentNode;
         public ObjectMap $shortestPathSegments;
@@ -82,8 +82,8 @@ namespace UseCases
                 $this->tentativeDistances->setDistanceTo($n, INF);
             }
 
-            while ($closestFromStart = $this->processCurrentNode()) {
-                $this->currentNode = $closestFromStart->addRole('CurrentNode', $this);
+            while ($nextUnvisitedNode = $this->currentNode->traverse()) {
+                $this->currentNode = $nextUnvisitedNode->addRole('CurrentNode', $this);
             }
 
             for (
@@ -95,14 +95,6 @@ namespace UseCases
             }
             $startToEnd = array_reverse($segments);
             return array_merge([$this->startNode], $startToEnd);
-        }
-
-        private function processCurrentNode(): Node | null {
-            $this->currentNode->markVisited();
-            if ( !$this->unvisitedNodes->hasNode($this->destinationNode) ) {
-                return null;
-            }
-            return $this->startNode->findClosestUnvisitedNode();
         }
     }
 }
@@ -129,6 +121,15 @@ namespace UseCases\CalculateShortestPath\Roles
 
     trait CurrentNode
     {
+        // visit this node, and determine the next closest unvisited node from the start
+        function traverse(): Node | null {
+            $this->markVisited();
+            if ( !$this->context->unvisitedNodes->hasNode($this->context->destinationNode) ) {
+                return null;
+            }
+            return $this->context->startNode->findClosestUnvisitedNode();
+        }
+
         function determinePreviousInPath() {
             foreach ($this->unvisitedNeighbors() as $neighbor) {
                 $neighbor->addRole('Neighbor', $this->context);
