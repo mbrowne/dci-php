@@ -127,7 +127,27 @@ namespace UseCases\CalculateShortestPath\Roles
             if ( !$this->context->unvisitedNodes->hasNode($this->context->destinationNode) ) {
                 return null;
             }
-            return $this->context->startNode->findClosestUnvisitedNode();
+            return $this->findClosestUnvisitedNode();
+        }
+
+        function findClosestUnvisitedNode() {
+            $this->determinePreviousInPath();
+
+            $tentativeDistances = $this->context->tentativeDistances;
+            $unvisitedNodes = iterator_to_array($this->context->unvisitedNodes);
+            if (empty($unvisitedNodes)) {
+                return null;
+            }
+
+            return array_reduce(
+                $unvisitedNodes,
+                function($x, $y) use ($tentativeDistances) {
+                    return $tentativeDistances->distanceTo($x) < $tentativeDistances->distanceTo($y)
+                        ? $x
+                        : $y;
+                },
+                $unvisitedNodes[0]
+            );
         }
 
         function determinePreviousInPath() {
@@ -173,28 +193,7 @@ namespace UseCases\CalculateShortestPath\Roles
         }
     }
 
-    trait StartNode
-    {
-        function findClosestUnvisitedNode() {
-            $this->context->currentNode->determinePreviousInPath();
-
-            $tentativeDistances = $this->context->tentativeDistances;
-            $unvisitedNodes = iterator_to_array($this->context->unvisitedNodes);
-            if (empty($unvisitedNodes)) {
-                return null;
-            }
-
-            return array_reduce(
-                $unvisitedNodes,
-                function($x, $y) use ($tentativeDistances) {
-                    return $tentativeDistances->distanceTo($x) < $tentativeDistances->distanceTo($y)
-                        ? $x
-                        : $y;
-                },
-                $unvisitedNodes[0]
-            );
-        }
-    }
+    trait StartNode {}
 
     trait DestinationNode {}
 
