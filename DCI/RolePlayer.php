@@ -147,7 +147,7 @@ trait RolePlayer
 				$conflictingRoleClassName = get_class($conflictingRole);
 				throw new Exception("Error binding role '".get_class($role)."': The method '$methodName' was already added via the role '$conflictingRoleClassName'.
 					Please name it something different. (In a future version of this DCI library, multiple roles with
-					methods sharing the same name may be allowed, but this is not currently supported due to limitations of PHP).)");
+					methods sharing the same name might be allowed, but this is not currently supported due to limitations of PHP.");
 			}
 			$this->roleMethods[$contextClassName][$methodName] = $role;
 		}
