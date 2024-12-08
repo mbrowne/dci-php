@@ -56,13 +56,10 @@ namespace UseCases
         public Node $currentNode;
         public ObjectMap $shortestPathSegments;
 
-        function __construct(Graph $graph) {
+        function __construct(Graph $graph, Node $startNode, Node $destinationNode) {
+            assert($graph->contains($startNode) && $graph->contains($destinationNode));
+
             $this->graph = $graph->addRole('Graph', $this);
-        }
-
-        public function shortestPathFrom(Node $startNode, Node $destinationNode) {
-            assert($this->graph->contains($startNode) && $this->graph->contains($destinationNode));
-
             $unvisitedNodes = new ObjectSet($this->graph->nodes());
             $this->unvisitedNodes = $unvisitedNodes->addRole('UnvisitedNodes', $this);
             $this->shortestPathSegments = (new ObjectMap())->addRole('ShortestPathSegments', $this);
@@ -70,12 +67,15 @@ namespace UseCases
             $this->startNode = $startNode->addRole('StartNode', $this);
             $this->destinationNode = $destinationNode->addRole('DestinationNode', $this);
             $this->currentNode = $startNode->addRole('CurrentNode', $this);
-            $this->currentNode->markVisited();
 
             $tentativeDistances = new ObjectMap([
                 [$this->startNode, 0]
             ]);
             $this->tentativeDistances = $tentativeDistances->addRole('TentativeDistances', $this);
+        }
+
+        public function shortestPath() {
+            $this->currentNode->markVisited();
             foreach ($this->unvisitedNodes as $n) {
                 // starting tentative value is infinity
                 $this->tentativeDistances->setDistanceTo($n, INF);
