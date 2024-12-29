@@ -36,8 +36,11 @@ abstract class Role
 	 * Implements $this->self from inside roles
 	 */
 	function __get($propName) {
-		if ($propName === 'self') {
-			return $this->data;
+		switch ($propName) {
+			case 'self':
+				return $this->data;
+			case 'roleName':
+				return $this->roleName;
 		}
 		throw new Exception("Cannot access property '$propName' via role '$this->roleName': roles can't access data properties directly, but only public methods.");
 	}

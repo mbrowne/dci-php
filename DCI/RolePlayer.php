@@ -74,7 +74,7 @@ trait RolePlayer
 		}
 		$role = new $roleClassName($this, $context, $roleName);
 		
-		$this->bindRoleMethods($role);
+		$this->bindRoleMethods($roleName, $role);
 		return $this;
 	}
 	
@@ -90,7 +90,7 @@ trait RolePlayer
 		return $this;
 	}
 	
-	protected function bindRoleMethods($role) {
+	protected function bindRoleMethods($roleName, $role) {
 		$contextClassName = $this->currentContextClassName;
 		
 		//Get all public method names for this role using reflection
@@ -137,10 +137,17 @@ trait RolePlayer
 			
 			if (array_key_exists($methodName, $existingRoleMethods)) {
 				$conflictingRole = $existingRoleMethods[$methodName];
+				if ($conflictingRole->roleName == $roleName) {
+					// This role was already bound; ignore and continue.
+					// (We allow this because it can be useful for contexts whose logic
+					// includes re-binding of roles.)
+					continue;
+				}
+
 				$conflictingRoleClassName = get_class($conflictingRole);
 				throw new Exception("Error binding role '".get_class($role)."': The method '$methodName' was already added via the role '$conflictingRoleClassName'.
 					Please name it something different. (In a future version of this DCI library, multiple roles with
-					methods sharing the same name may be allowed, but this is not currently supported due to limitations of PHP).)");
+					methods sharing the same name might be allowed, but this is not currently supported due to limitations of PHP.");
 			}
 			$this->roleMethods[$contextClassName][$methodName] = $role;
 		}
